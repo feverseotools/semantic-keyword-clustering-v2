@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 
-# Importaciones de los módulos
+# Module imports
 from modules.preprocessing import preprocess_keywords
 from modules.embeddings import generate_embeddings, check_embedding_models
 from modules.clustering import run_clustering, refine_clusters
@@ -13,19 +13,19 @@ from modules.search_intent import classify_cluster_intents
 from modules.naming import generate_cluster_names
 from modules.evaluation import evaluate_cluster_quality, analyze_cluster_insights
 
-# Importaciones de la UI
+# UI imports
 from ui.styles import load_css
 from ui.components import display_cluster_card, show_filter_controls, show_metrics_summary
 from ui.pages import show_welcome_page, show_results_dashboard
 from ui.visualizations import show_intent_distribution, show_cluster_sizes
 
-# Importaciones de utilidades
+# Utility imports
 from utils.file_handlers import process_uploaded_file, export_results
 from utils.constants import INTENT_COLORS, DEFAULT_NUM_CLUSTERS, APP_NAME, APP_DESCRIPTION
 from utils.helpers import generate_sample_csv
 from utils.state import initialize_session_state, update_session_state
 
-# Configuración de la página
+# Page configuration
 st.set_page_config(
     page_title=APP_NAME,
     page_icon="🔍",
@@ -33,13 +33,13 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Cargar estilos CSS
+# Load CSS styles
 load_css()
 
-# Inicializar estado de la sesión
+# Initialize session state
 initialize_session_state()
 
-# Verificar disponibilidad de modelos
+# Check model availability
 openai_available, sentence_transformers_available, spacy_available = check_embedding_models()
 
 def main():
@@ -48,7 +48,7 @@ def main():
         st.markdown(f"## {APP_NAME}")
         st.markdown("### 1. Import Keywords")
         
-        # Opciones de formato CSV
+        # CSV format options
         csv_format = st.radio(
             "CSV Format:",
             options=["No header (one keyword per line)", "With header (Keyword Planner format)"],
@@ -57,7 +57,7 @@ def main():
         )
         format_type = "no_header" if "No header" in csv_format else "with_header"
         
-        # Upload del archivo
+        # File upload
         uploaded_file = st.file_uploader("Upload your keywords CSV file", type=['csv'])
         
         # Sample CSV download
@@ -73,7 +73,7 @@ def main():
         
         st.markdown("### 2. Clustering Options")
         
-        # Opciones básicas
+        # Basic options
         num_clusters = st.slider(
             "Number of clusters",
             min_value=2, 
@@ -82,7 +82,7 @@ def main():
             help="Higher number = more specific clusters, Lower number = broader clusters"
         )
         
-        # Opciones de embedding
+        # Embedding options
         embedding_option = st.selectbox(
             "Embedding method:",
             options=[
@@ -100,7 +100,7 @@ def main():
         else:
             openai_api_key = None
             
-        # Opciones avanzadas en un expander
+        # Advanced options in an expander
         with st.expander("Advanced Options", expanded=False):
             spacy_language = st.selectbox(
                 "Language for text processing:",
@@ -123,7 +123,7 @@ def main():
             else:
                 gpt_model = None
         
-        # Botón para comenzar el procesamiento
+        # Start processing button
         start_button = st.button(
             "Start Clustering" if uploaded_file else "Upload a file to begin",
             disabled=not uploaded_file,
@@ -143,14 +143,14 @@ def main():
     if not st.session_state.processing_complete:
         show_welcome_page()
         
-        # Si no hay archivo subido, no hacemos nada más
+        # If no file uploaded, do nothing more
         if not uploaded_file:
             return
             
-        # Procesamiento cuando se presiona el botón
+        # Processing when button is clicked
         if start_button:
             with st.spinner("Processing your keywords..."):
-                # 1. Cargar y procesar el archivo
+                # 1. Load and process the file
                 progress_text = st.empty()
                 progress_bar = st.progress(0)
                 
@@ -159,7 +159,7 @@ def main():
                 progress_bar.progress(0.2)
                 
                 if df is not None:
-                    # Guardar configuración de usuario
+                    # Save user settings
                     st.session_state.user_settings = {
                         "csv_format": format_type,
                         "num_clusters": num_clusters,
@@ -170,12 +170,12 @@ def main():
                         "gpt_model": gpt_model
                     }
                     
-                    # 2. Preprocesar keywords
+                    # 2. Preprocess keywords
                     progress_text.text("Preprocessing keywords...")
                     df = preprocess_keywords(df, spacy_language)
                     progress_bar.progress(0.3)
                     
-                    # 3. Generar embeddings
+                    # 3. Generate embeddings
                     progress_text.text("Generating semantic embeddings...")
                     embeddings = generate_embeddings(
                         df, 
@@ -184,27 +184,27 @@ def main():
                     )
                     progress_bar.progress(0.5)
                     
-                    # 4. Aplicar clustering
+                    # 4. Apply clustering
                     progress_text.text("Clustering keywords by semantic similarity...")
                     clustered_df = run_clustering(df, embeddings, num_clusters)
                     progress_bar.progress(0.6)
                     
-                    # 5. Refinar clusters
+                    # 5. Refine clusters
                     progress_text.text("Refining clusters...")
                     clustered_df = refine_clusters(clustered_df, embeddings)
                     progress_bar.progress(0.7)
                     
-                    # 6. Evaluar calidad de clusters
+                    # 6. Evaluate cluster quality
                     progress_text.text("Evaluating cluster quality...")
                     clustered_df = evaluate_cluster_quality(clustered_df, embeddings)
                     progress_bar.progress(0.8)
                     
-                    # 7. Clasificar intención de búsqueda
+                    # 7. Classify search intent
                     progress_text.text("Analyzing search intent...")
                     cluster_intents = classify_cluster_intents(clustered_df)
                     progress_bar.progress(0.85)
                     
-                    # 8. Generar nombres de clusters si se usa GPT
+                    # 8. Generate cluster names if using GPT
                     if use_gpt and openai_api_key:
                         progress_text.text("Generating cluster names with AI...")
                         cluster_names = generate_cluster_names(
@@ -214,17 +214,17 @@ def main():
                         )
                         progress_bar.progress(0.9)
                     else:
-                        # Nombres genéricos si no se usa AI
+                        # Generic names if not using AI
                         cluster_names = {
                             cluster_id: f"Cluster {cluster_id}"
                             for cluster_id in clustered_df['cluster_id'].unique()
                         }
                     
-                    # 9. Añadir nombres a los clusters
+                    # 9. Add names to clusters
                     for cluster_id, name in cluster_names.items():
                         clustered_df.loc[clustered_df['cluster_id'] == cluster_id, 'cluster_name'] = name
                     
-                    # 10. Generar insights adicionales
+                    # 10. Generate additional insights
                     progress_text.text("Generating advanced insights...")
                     cluster_insights = analyze_cluster_insights(
                         clustered_df, 
@@ -233,23 +233,23 @@ def main():
                     )
                     progress_bar.progress(1.0)
                     
-                    # Guardar resultados en la sesión
+                    # Save results to session
                     update_session_state(
                         df=clustered_df,
                         cluster_insights=cluster_insights,
                         processing_complete=True
                     )
                     
-                    # Limpiar indicadores
+                    # Clear indicators
                     progress_text.empty()
                     progress_bar.empty()
                     
-                    # Forzar rerun para mostrar resultados
+                    # Force rerun to show results
                     st.experimental_rerun()
                 else:
                     st.error("There was an error processing your file. Please check the format and try again.")
     else:
-        # Mostrar el dashboard de resultados
+        # Show results dashboard
         show_results_dashboard(
             st.session_state.results_df,
             st.session_state.cluster_insights
