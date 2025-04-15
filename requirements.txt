@@ -1,0 +1,41 @@
+# Core dependencies
+streamlit>=1.26.0
+pandas>=1.5.3
+numpy>=1.24.3
+scikit-learn>=1.2.2
+plotly>=5.15.0
+nltk>=3.8.1
+scipy>=1.10.1
+
+# Embedding models
+sentence-transformers>=2.2.2  # For high-quality embeddings without API
+openai>=1.3.0  # For OpenAI embeddings and cluster naming
+tiktoken>=0.5.1  # Required by OpenAI for tokenization
+
+# Advanced NLP
+spacy>=3.6.1  # For advanced text processing
+textblob>=0.17.1  # Alternative to spaCy for text analysis
+
+# Additional spaCy models (installed separately with: python -m spacy download [model])
+# en_core_web_sm
+# es_core_news_sm
+# fr_core_news_sm
+# de_core_news_sm
+
+# Advanced clustering
+hdbscan>=0.8.33  # For density-based clustering (optional)
+
+# Data export
+openpyxl>=3.1.2  # For Excel export
+xlsxwriter>=3.1.2  # Alternative for Excel with more formatting options
+
+# Advanced features
+umap-learn>=0.5.4  # For dimensionality reduction (optional)
+gensim>=4.3.1  # For topic modeling and additional word embeddings
+wordcloud>=1.9.2  # For word cloud visualizations (optional)
+
+# Utilities
+tqdm>=4.66.1  # For progress bars in batch processing
+python-dotenv>=1.0.0  # For environment variable management (API keys)
+requests>=2.31.0  # For external API integrations
+joblib>=1.3.2  # For parallelization and caching
