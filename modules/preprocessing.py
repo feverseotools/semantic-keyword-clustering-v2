@@ -13,6 +13,26 @@ import pandas as pd
 import streamlit as st
 from typing import List, Dict, Optional, Any, Union
 
+# Download NLTK resources at startup
+try:
+    nltk.download('stopwords', quiet=True)
+    nltk.download('punkt', quiet=True)
+    nltk.download('wordnet', quiet=True)
+    nltk_resources_available = True
+    print("NLTK resources downloaded successfully")
+except Exception as e:
+    print(f"Error downloading NLTK resources: {str(e)}")
+    nltk_resources_available = False
+
+# Try to download TextBlob corpora if needed
+if textblob_available:
+    try:
+        import textblob.download_corpora
+        textblob.download_corpora.download_all()
+        print("TextBlob corpora downloaded successfully")
+    except Exception as e:
+        print(f"Error downloading TextBlob corpora: {str(e)}")
+        
 # Try to import optional dependencies
 try:
     import spacy
