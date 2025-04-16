@@ -27,12 +27,8 @@ except Exception as e:
 try:
     import spacy
     spacy_base_available = True
-    try:
-        # Verify we can load a model
-        _test_model = spacy.load("en_core_web_sm")
-        spacy_model_available = True
-    except:
-        spacy_model_available = False
+    # Don't try to load the model on import, just check if spaCy itself is available
+    spacy_model_available = False  # Will check when actually trying to load
 except ImportError:
     spacy_base_available = False
     spacy_model_available = False
@@ -82,19 +78,20 @@ def load_spacy_model(language: str) -> Optional[Any]:
         st.info("spaCy is not available. Using basic text processing instead.")
         return None
     
-    if not spacy_model_available:
-        st.info("spaCy models are not installed. Using basic text processing instead.")
-        return None
-    
     model_name = SPACY_LANGUAGE_MODELS.get(language)
     if not model_name:
         st.info(f"No spaCy model defined for {language}. Using basic processing instead.")
         return None
     
     try:
-        return spacy.load(model_name)
+        model = spacy.load(model_name)
+        # If we got here, model loading worked
+        global spacy_model_available
+        spacy_model_available = True
+        return model
     except Exception as e:
-        st.info(f"Could not load spaCy model for {language}. Using basic processing instead.")
+        st.info(f"Could not load spaCy model '{model_name}'. This is normal if you haven't installed it. Using basic processing instead.")
+        st.info(f"To install the model, run: python -m spacy download {model_name}")
         return None
 
 def basic_preprocessing(text: str) -> str:
