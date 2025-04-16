@@ -207,6 +207,16 @@ def find_representative_keywords(df: pd.DataFrame, embeddings: np.ndarray,
     result_df = df.copy()
     result_df['is_representative'] = False
     
+    # Verify embeddings shape matches dataframe
+    if len(result_df) != embeddings.shape[0]:
+        st.warning(f"Embedding count ({embeddings.shape[0]}) doesn't match keyword count ({len(result_df)}). Using basic selection.")
+        # Fall back to selecting first few keywords per cluster
+        for cluster_id in result_df['cluster_id'].unique():
+            cluster_indices = result_df[result_df['cluster_id'] == cluster_id].index.tolist()
+            rep_indices = cluster_indices[:min(max_representatives, len(cluster_indices))]
+            result_df.loc[rep_indices, 'is_representative'] = True
+        return result_df
+    
     # For each cluster, find the most representative keywords
     for cluster_id in result_df['cluster_id'].unique():
         # Get indices of keywords in this cluster
@@ -217,25 +227,31 @@ def find_representative_keywords(df: pd.DataFrame, embeddings: np.ndarray,
             result_df.loc[cluster_indices, 'is_representative'] = True
             continue
         
-        # Get embeddings for this cluster
-        cluster_embeddings = embeddings[cluster_indices]
-        
-        # Calculate cluster centroid
-        centroid = np.mean(cluster_embeddings, axis=0)
-        
-        # Calculate distance to centroid for each keyword
-        distances = []
-        for idx, embedding in zip(cluster_indices, cluster_embeddings):
-            # Use cosine similarity (higher is better)
-            similarity = cosine_similarity([embedding], [centroid])[0][0]
-            distances.append((idx, similarity))
-        
-        # Sort by similarity (descending)
-        distances.sort(key=lambda x: x[1], reverse=True)
-        
-        # Select top representatives
-        representative_indices = [idx for idx, _ in distances[:max_representatives]]
-        result_df.loc[representative_indices, 'is_representative'] = True
+        try:
+            # Get embeddings for this cluster
+            cluster_embeddings = embeddings[cluster_indices]
+            
+            # Calculate cluster centroid
+            centroid = np.mean(cluster_embeddings, axis=0)
+            
+            # Calculate distance to centroid for each keyword
+            distances = []
+            for idx, embedding in zip(cluster_indices, cluster_embeddings):
+                # Use cosine similarity (higher is better)
+                similarity = cosine_similarity([embedding], [centroid])[0][0]
+                distances.append((idx, similarity))
+            
+            # Sort by similarity (descending)
+            distances.sort(key=lambda x: x[1], reverse=True)
+            
+            # Select top representatives
+            representative_indices = [idx for idx, _ in distances[:max_representatives]]
+            result_df.loc[representative_indices, 'is_representative'] = True
+        except Exception as e:
+            # Fall back to selecting first few keywords if there's an error
+            st.warning(f"Error finding representatives for cluster {cluster_id}: {str(e)}")
+            rep_indices = cluster_indices[:min(max_representatives, len(cluster_indices))]
+            result_df.loc[rep_indices, 'is_representative'] = True
     
     return result_df
 
