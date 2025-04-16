@@ -13,47 +13,43 @@ import pandas as pd
 import streamlit as st
 from typing import List, Dict, Optional, Any, Union
 
-# Download NLTK resources at startup
+# Download NLTK resources at startup - with better error handling
 try:
     nltk.download('stopwords', quiet=True)
     nltk.download('punkt', quiet=True)
     nltk.download('wordnet', quiet=True)
     nltk_resources_available = True
-    print("NLTK resources downloaded successfully")
 except Exception as e:
-    print(f"Error downloading NLTK resources: {str(e)}")
+    print(f"NLTK resource download error: {str(e)}")
     nltk_resources_available = False
 
-# Try to download TextBlob corpora if needed
-if textblob_available:
-    try:
-        import textblob.download_corpora
-        textblob.download_corpora.download_all()
-        print("TextBlob corpora downloaded successfully")
-    except Exception as e:
-        print(f"Error downloading TextBlob corpora: {str(e)}")
-        
-# Try to import optional dependencies
+# Try to import optional dependencies with better error handling
 try:
     import spacy
-    spacy_available = True
+    spacy_base_available = True
+    try:
+        # Verify we can load a model
+        _test_model = spacy.load("en_core_web_sm")
+        spacy_model_available = True
+    except:
+        spacy_model_available = False
 except ImportError:
-    spacy_available = False
+    spacy_base_available = False
+    spacy_model_available = False
 
 try:
     from textblob import TextBlob
     textblob_available = True
+    try:
+        # Test TextBlob functionality
+        _test_blob = TextBlob("Testing")
+        _test_phrases = _test_blob.noun_phrases
+        textblob_resources_available = True
+    except:
+        textblob_resources_available = False
 except ImportError:
     textblob_available = False
-
-# Download NLTK resources at startup
-try:
-    nltk.download('stopwords', quiet=True)
-    nltk.download('punkt', quiet=True)
-    nltk.download('wordnet', quiet=True)
-    nltk_resources_available = True
-except Exception:
-    nltk_resources_available = False
+    textblob_resources_available = False
 
 # Map of language names to spaCy model names
 SPACY_LANGUAGE_MODELS = {
@@ -82,22 +78,28 @@ def load_spacy_model(language: str) -> Optional[Any]:
     Returns:
         A loaded spaCy model or None if not available
     """
-    if not spacy_available:
+    if not spacy_base_available:
+        st.info("spaCy is not available. Using basic text processing instead.")
+        return None
+    
+    if not spacy_model_available:
+        st.info("spaCy models are not installed. Using basic text processing instead.")
         return None
     
     model_name = SPACY_LANGUAGE_MODELS.get(language)
     if not model_name:
+        st.info(f"No spaCy model defined for {language}. Using basic processing instead.")
         return None
     
     try:
         return spacy.load(model_name)
     except Exception as e:
-        st.warning(f"Could not load spaCy model for {language}: {str(e)}")
+        st.info(f"Could not load spaCy model for {language}. Using basic processing instead.")
         return None
 
 def basic_preprocessing(text: str) -> str:
     """
-    Basic text preprocessing using NLTK.
+    Basic text preprocessing using NLTK if available, with multiple fallbacks.
     
     Args:
         text: Input text to preprocess
@@ -112,35 +114,50 @@ def basic_preprocessing(text: str) -> str:
         # Convert to lowercase
         text = text.lower()
         
-        # Tokenize
+        # Basic tokenization and stopword removal approach
         if nltk_resources_available:
-            from nltk.tokenize import word_tokenize
-            from nltk.corpus import stopwords
-            tokens = word_tokenize(text)
-            stop_words = set(stopwords.words('english'))
-        else:
-            # Simple fallback tokenization if NLTK resources not available
-            tokens = text.split()
-            stop_words = {'a', 'an', 'the', 'and', 'or', 'but', 'if', 'because', 
-                          'as', 'what', 'when', 'where', 'how', 'why', 'who',
-                          'which', 'this', 'that', 'these', 'those', 'is', 'are',
-                          'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had',
-                          'do', 'does', 'did', 'to', 'at', 'in', 'on', 'for', 'with'}
+            try:
+                # Use NLTK if available
+                from nltk.tokenize import word_tokenize
+                from nltk.corpus import stopwords
+                
+                tokens = word_tokenize(text)
+                stop_words = set(stopwords.words('english'))
+                tokens = [t for t in tokens if t.isalpha() and t not in stop_words]
+                
+                # Lemmatization if available
+                try:
+                    from nltk.stem import WordNetLemmatizer
+                    lemmatizer = WordNetLemmatizer()
+                    tokens = [lemmatizer.lemmatize(t) for t in tokens]
+                except Exception:
+                    # Skip lemmatization if not available
+                    pass
+                
+                return " ".join(tokens)
+            except Exception as e:
+                # Fall through to simple approach on error
+                print(f"NLTK processing error: {str(e)}")
+        
+        # Very simple fallback tokenization
+        tokens = text.split()
+        
+        # Simple stopword list
+        stop_words = {'a', 'an', 'the', 'and', 'or', 'but', 'if', 'because', 
+                    'as', 'what', 'when', 'where', 'how', 'why', 'who',
+                    'which', 'this', 'that', 'these', 'those', 'is', 'are',
+                    'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had',
+                    'do', 'does', 'did', 'to', 'at', 'in', 'on', 'for', 'with'}
         
         # Remove stopwords and non-alphabetic tokens
         tokens = [t for t in tokens if t.isalpha() and t not in stop_words]
         
-        # Lemmatization
-        if nltk_resources_available:
-            from nltk.stem import WordNetLemmatizer
-            lemmatizer = WordNetLemmatizer()
-            tokens = [lemmatizer.lemmatize(t) for t in tokens]
-        
         return " ".join(tokens)
     
     except Exception as e:
-        st.warning(f"Error in basic preprocessing: {str(e)}")
-        return text.lower() if isinstance(text, str) else ""
+        # Ultimate fallback - just return lowercase text
+        print(f"Error in basic preprocessing: {str(e)}")
+        return text.lower()
 
 def advanced_preprocessing(text: str, spacy_nlp: Any = None) -> str:
     """
@@ -176,7 +193,7 @@ def advanced_preprocessing(text: str, spacy_nlp: Any = None) -> str:
             # Combine everything
             return " ".join(tokens + entities + noun_chunks)
         
-        elif textblob_available:
+        elif textblob_available and textblob_resources_available:
             # Use TextBlob as a fallback
             blob = TextBlob(text.lower())
             
@@ -187,7 +204,10 @@ def advanced_preprocessing(text: str, spacy_nlp: Any = None) -> str:
             words = [w for w in blob.words if len(w) > 1 and w.lower() not in common_stops]
             
             # Get noun phrases
-            noun_phrases = list(blob.noun_phrases)
+            try:
+                noun_phrases = list(blob.noun_phrases)
+            except:
+                noun_phrases = []
             
             # Combine
             return " ".join(words + noun_phrases)
@@ -197,7 +217,7 @@ def advanced_preprocessing(text: str, spacy_nlp: Any = None) -> str:
             return basic_preprocessing(text)
             
     except Exception as e:
-        st.warning(f"Error in advanced preprocessing: {str(e)}")
+        print(f"Error in advanced preprocessing: {str(e)}")
         return basic_preprocessing(text)
 
 def preprocess_keywords(df: pd.DataFrame, language: str = "English") -> pd.DataFrame:
@@ -220,13 +240,12 @@ def preprocess_keywords(df: pd.DataFrame, language: str = "English") -> pd.DataF
     spacy_nlp = load_spacy_model(language)
     
     # Determine preprocessing method
-    use_advanced = spacy_nlp is not None or textblob_available
-    preprocess_func = advanced_preprocessing if use_advanced else basic_preprocessing
+    use_advanced = (spacy_nlp is not None) or (textblob_available and textblob_resources_available)
     
     # Log the preprocessing method being used
     if spacy_nlp is not None:
         st.success(f"Using advanced preprocessing with spaCy for {language}")
-    elif textblob_available and use_advanced:
+    elif textblob_available and textblob_resources_available:
         st.success("Using advanced preprocessing with TextBlob")
     else:
         st.info("Using basic preprocessing with NLTK")
@@ -239,12 +258,17 @@ def preprocess_keywords(df: pd.DataFrame, language: str = "English") -> pd.DataF
     processed_keywords = []
     
     for i, keyword in enumerate(df['keyword']):
-        if use_advanced:
-            processed = advanced_preprocessing(keyword, spacy_nlp)
-        else:
-            processed = basic_preprocessing(keyword)
-        
-        processed_keywords.append(processed)
+        try:
+            if use_advanced:
+                processed = advanced_preprocessing(keyword, spacy_nlp)
+            else:
+                processed = basic_preprocessing(keyword)
+            
+            processed_keywords.append(processed)
+        except Exception as e:
+            # Fallback to simple processing on error
+            st.warning(f"Error processing keyword '{keyword}': {str(e)}")
+            processed_keywords.append(str(keyword).lower())
         
         # Update progress bar every 20 items to avoid excessive rerenders
         if i % 20 == 0 or i == total - 1:
@@ -282,8 +306,10 @@ def extract_keyword_features(keyword: str) -> Dict[str, Any]:
     
     return features
 
-# Ensure all NLTK resources are downloaded when this module is imported
-if nltk_resources_available:
-    nltk.download('stopwords', quiet=True)
-    nltk.download('punkt', quiet=True)
-    nltk.download('wordnet', quiet=True)
+# Print available resources - useful for debugging
+print("NLP Resources Available:")
+print(f"NLTK: {nltk_resources_available}")
+print(f"spaCy base: {spacy_base_available}")
+print(f"spaCy models: {spacy_model_available}")
+print(f"TextBlob: {textblob_available}")
+print(f"TextBlob resources: {textblob_resources_available}")
