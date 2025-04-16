@@ -30,9 +30,16 @@ def evaluate_cluster_quality(df: pd.DataFrame, embeddings: np.ndarray) -> pd.Dat
     
     result_df = df.copy()
     
-    # Initialize quality metrics
-    result_df['coherence_score'] = 0.0
+    # Initialize quality metrics with default values
+    result_df['coherence_score'] = 0.5  # Default neutral value
     result_df['centroid_distance'] = 0.0
+    
+    # Verify embeddings shape matches dataframe length
+    if len(result_df) != embeddings.shape[0]:
+        st.warning(f"Embedding count ({embeddings.shape[0]}) doesn't match keyword count ({len(result_df)}). Using default quality values.")
+        # Just set default quality scores and return
+        result_df['quality_score'] = 5.0  # Default neutral score
+        return result_df
     
     # Get unique cluster IDs
     cluster_ids = result_df['cluster_id'].unique()
@@ -45,51 +52,59 @@ def evaluate_cluster_quality(df: pd.DataFrame, embeddings: np.ndarray) -> pd.Dat
     for i, cluster_id in enumerate(cluster_ids):
         progress_text.text(f"Evaluating cluster {i+1}/{len(cluster_ids)}")
         
-        # Get indices for this cluster
-        cluster_indices = result_df[result_df['cluster_id'] == cluster_id].index.tolist()
-        
-        if len(cluster_indices) <= 1:
-            # If only one keyword in cluster, coherence is perfect and distance is zero
-            result_df.loc[cluster_indices, 'coherence_score'] = 1.0
-            result_df.loc[cluster_indices, 'centroid_distance'] = 0.0
-            continue
-        
-        # Get embeddings for this cluster
-        cluster_embeddings = embeddings[cluster_indices]
-        
-        # Calculate centroid
-        centroid = np.mean(cluster_embeddings, axis=0)
-        
-        # Normalize for cosine similarity
-        centroid_norm = np.linalg.norm(centroid)
-        if centroid_norm > 0:
-            centroid_normalized = centroid / centroid_norm
-        else:
-            centroid_normalized = centroid
-        
-        # Calculate pairwise similarities within cluster
-        similarities = []
-        distances = []
-        
-        for idx, embedding in zip(cluster_indices, cluster_embeddings):
-            # Normalize embedding
-            emb_norm = np.linalg.norm(embedding)
-            if emb_norm > 0:
-                embedding_normalized = embedding / emb_norm
+        try:
+            # Get indices for this cluster
+            cluster_indices = result_df[result_df['cluster_id'] == cluster_id].index.tolist()
+            
+            if len(cluster_indices) <= 1:
+                # If only one keyword in cluster, coherence is perfect and distance is zero
+                result_df.loc[cluster_indices, 'coherence_score'] = 1.0
+                result_df.loc[cluster_indices, 'centroid_distance'] = 0.0
+                continue
+            
+            # Get embeddings for this cluster
+            cluster_embeddings = embeddings[cluster_indices]
+            
+            # Calculate centroid
+            centroid = np.mean(cluster_embeddings, axis=0)
+            
+            # Normalize for cosine similarity
+            centroid_norm = np.linalg.norm(centroid)
+            if centroid_norm > 0:
+                centroid_normalized = centroid / centroid_norm
             else:
-                embedding_normalized = embedding
+                centroid_normalized = centroid
             
-            # Calculate cosine similarity with centroid
-            similarity = np.dot(embedding_normalized, centroid_normalized)
-            similarities.append(similarity)
+            # Calculate pairwise similarities within cluster
+            similarities = []
+            distances = []
             
-            # Calculate Euclidean distance to centroid
-            distance = np.linalg.norm(embedding - centroid)
-            distances.append(distance)
+            for idx, embedding in zip(cluster_indices, cluster_embeddings):
+                # Normalize embedding
+                emb_norm = np.linalg.norm(embedding)
+                if emb_norm > 0:
+                    embedding_normalized = embedding / emb_norm
+                else:
+                    embedding_normalized = embedding
+                
+                # Calculate cosine similarity with centroid
+                similarity = np.dot(embedding_normalized, centroid_normalized)
+                similarities.append(similarity)
+                
+                # Calculate Euclidean distance to centroid
+                distance = np.linalg.norm(embedding - centroid)
+                distances.append(distance)
+                
+                # Store individual scores
+                result_df.loc[idx, 'coherence_score'] = similarity
+                result_df.loc[idx, 'centroid_distance'] = distance
             
-            # Store individual scores
-            result_df.loc[idx, 'coherence_score'] = similarity
-            result_df.loc[idx, 'centroid_distance'] = distance
+        except Exception as e:
+            st.warning(f"Error evaluating cluster {cluster_id}: {str(e)}")
+            # Set default values for this cluster
+            cluster_indices = result_df[result_df['cluster_id'] == cluster_id].index.tolist()
+            result_df.loc[cluster_indices, 'coherence_score'] = 0.5
+            result_df.loc[cluster_indices, 'centroid_distance'] = 0.0
         
         # Update progress
         progress_bar.progress((i + 1) / len(cluster_ids))
