@@ -2,18 +2,24 @@
 build-essential
 python3-dev
 
-# For SciPy (in case it needs to compile from source)
+# For BLAS/LAPACK (SciPy, NumPy)
 gfortran
+libopenblas-dev
+liblapack-dev
 libatlas-base-dev
 
-# For HDBSCAN’s OpenMP
+# OpenMP support (HDBSCAN, numba)
 libgomp1
 
-# For wordcloud / PIL wheels
-libfreetype6-dev
+# Compression & image libs (wordcloud/Pillow)
+zlib1g-dev
 libjpeg-dev
 libpng-dev
+libfreetype6-dev
 
-# (Only if you end up building Rust‑based extensions)
+# pkg-config for finding headers
+pkg-config
+
+# Rust toolchain (tiktoken or any Rust‑based wheels)
 rustc
 cargo
