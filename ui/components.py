@@ -20,7 +20,7 @@ def display_cluster_card(cluster_id: int,
                        insights: Dict[str, Any], 
                        df: pd.DataFrame,
                        on_click_callback: Optional[Callable] = None,
-                       card_index: int = 0) -> None:  # Add card_index parameter
+                       card_index: int = 0) -> None:
     """
     Display a single cluster card with all relevant information.
     
@@ -49,76 +49,49 @@ def display_cluster_card(cluster_id: int,
     intent_color = INTENT_COLORS.get(primary_intent, "#757575")
     intent_class = primary_intent.lower().replace(" ", "-")
     
-    # Create card HTML
-    card_html = f"""
-    <div class="cluster-card" style="border-left: 4px solid {intent_color};">
-        <h3 style="margin-top: 0; margin-bottom: 10px;">{cluster_name}</h3>
-        
-        <div class="metric-container">
-            <div class="metric-item">
-                Keywords: <span class="metric-value">{keyword_count}</span>
-            </div>
-            <div class="metric-item">
-                <span class="intent-badge intent-{intent_class}" 
-                      style="background-color: {intent_color}20; color: {intent_color};">
-                    {primary_intent}
-                </span>
-            </div>
-    """
+    # Create a card with standard Streamlit components instead of raw HTML
+    st.markdown(f"### {cluster_name}")
     
-    # Add search volume if available
+    # Create metrics using columns
+    col1, col2 = st.columns(2)
+    col3, col4 = st.columns(2)
+    
+    with col1:
+        st.metric("Keywords", f"{keyword_count}")
+    
+    with col2:
+        st.write(f"**Intent:** {primary_intent}")
+    
     if total_volume is not None:
-        card_html += f"""
-            <div class="metric-item">
-                Volume: <span class="metric-value">{total_volume:,}</span>
-            </div>
-        """
+        with col3:
+            st.metric("Volume", f"{total_volume:,}")
     
-    # Add quality score if available
     if quality_score is not None:
-        quality_color = "#4CAF50" if quality_score >= 7 else "#FF9800" if quality_score >= 5 else "#F44336"
-        card_html += f"""
-            <div class="metric-item">
-                Quality: <span class="metric-value" style="color: {quality_color};">{quality_score}</span>
-            </div>
-        """
+        with col4:
+            st.metric("Quality", f"{quality_score}")
     
-    # Close metric container and add description
+    # Show description if available
     description = insights.get('cluster_description', '')
     if description:
-        card_html += f"""
-        </div>
-        <div style="font-size: 14px; margin-bottom: 10px; color: #555;">
-            {description}
-        </div>
-        """
-    else:
-        card_html += "</div>"
+        st.write(description)
     
-    # Add representative keywords
+    # Show representative keywords
     if rep_keywords:
-        card_html += '<div class="keywords-container">'
-        for kw in rep_keywords:
-            card_html += f'<span class="keyword-pill">{kw}</span>'
-        
+        st.write("**Top Keywords:**")
+        keyword_text = ", ".join(rep_keywords)
         if keyword_count > len(rep_keywords):
-            card_html += f'<span class="keyword-pill">+{keyword_count - len(rep_keywords)} more</span>'
-        
-        card_html += '</div>'
+            keyword_text += f" + {keyword_count - len(rep_keywords)} more"
+        st.write(keyword_text)
     
-    # Close card
-    card_html += "</div>"
-    
-    # Display the card
-    st.markdown(card_html, unsafe_allow_html=True)
-    
-    # Add a button within the same container for viewing details
+    # Add a button for viewing details
     if on_click_callback:
         # Create a truly unique key for each button that won't cause conflicts
-        # Use both cluster_id and card_index to guarantee uniqueness
-        unique_key = f"view_cluster_{cluster_id}_{card_index}_{hash(str(insights))}"
+        unique_key = f"view_cluster_{cluster_id}_{card_index}_{abs(hash(str(insights)))}"
         if st.button(f"View Details", key=unique_key, use_container_width=True):
             on_click_callback(cluster_id)
+    
+    # Add a divider
+    st.markdown("---")
 
 def show_filter_controls(df: pd.DataFrame, cluster_insights: Dict[int, Dict[str, Any]]) -> Dict[str, Any]:
     """
