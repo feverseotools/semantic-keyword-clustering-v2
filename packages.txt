@@ -1,0 +1,3 @@
+# Build tools for compiling C‑extensions (e.g. HDBSCAN)
+build-essential
+python3-dev
