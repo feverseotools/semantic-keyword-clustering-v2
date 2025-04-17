@@ -1,32 +1,18 @@
-# Core build toolchain
 build-essential
 python3-dev
-
-# BLAS / LAPACK for NumPy & SciPy
 gfortran
 libopenblas-dev
 liblapack-dev
 libatlas-base-dev
-
-# OpenMP support (HDBSCAN, Numba)
 libgomp1
-
-# Compression & image libs (Pillow / wordcloud)
 zlib1g-dev
 libjpeg-dev
 libpng-dev
 libfreetype6-dev
-
-# SSL & C‑FFI (for cryptography builds; required by openai/aiohttp)
-libssl-dev
-libffi-dev
-
-# Header discovery
 pkg-config
-
-# Rust toolchain (for tokenizers/tiktoken)
 rustc
 cargo
-
-# CMake (in case any wheels fall back to CMake‑based builds)
+libssl-dev
+libffi-dev
 cmake
+git
