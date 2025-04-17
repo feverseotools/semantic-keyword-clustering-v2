@@ -19,7 +19,8 @@ from utils.constants import INTENT_COLORS
 def display_cluster_card(cluster_id: int, 
                        insights: Dict[str, Any], 
                        df: pd.DataFrame,
-                       on_click_callback: Optional[Callable] = None) -> None:
+                       on_click_callback: Optional[Callable] = None,
+                       card_index: int = 0) -> None:  # Add card_index parameter
     """
     Display a single cluster card with all relevant information.
     
@@ -28,6 +29,7 @@ def display_cluster_card(cluster_id: int,
         insights: Dictionary containing cluster insights
         df: The full dataframe with all clusters
         on_click_callback: Optional callback function when card is clicked
+        card_index: Index of the card in the display (used for unique keys)
     """
     # Get cluster data
     cluster_name = insights.get('cluster_name', f"Cluster {cluster_id}")
@@ -112,7 +114,10 @@ def display_cluster_card(cluster_id: int,
     
     # Add a button within the same container for viewing details
     if on_click_callback:
-        if st.button(f"View Details", key=f"view_cluster_{cluster_id}", use_container_width=True):
+        # Create a truly unique key for each button that won't cause conflicts
+        # Use both cluster_id and card_index to guarantee uniqueness
+        unique_key = f"view_cluster_{cluster_id}_{card_index}_{hash(str(insights))}"
+        if st.button(f"View Details", key=unique_key, use_container_width=True):
             on_click_callback(cluster_id)
 
 def show_filter_controls(df: pd.DataFrame, cluster_insights: Dict[int, Dict[str, Any]]) -> Dict[str, Any]:
