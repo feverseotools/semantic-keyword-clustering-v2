@@ -16,7 +16,6 @@ tiktoken>=0.5.1              # Tokenizer used by OpenAI models
 spacy>=3.6.1                 # Industrial-strength NLP library for advanced text processing
 textblob>=0.17.1             # Simplified text processing library with sentiment analysis
 en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.6.0/en_core_web_sm-3.6.0-py3-none-any.whl
-                             # spaCy English model wheel (PEP‑508 URL)
 
 # Advanced clustering
 hdbscan==0.8.32              # Hierarchical density-based clustering algorithm (pinned to prebuilt wheel)
