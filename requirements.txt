@@ -1,41 +1,37 @@
 # Core dependencies
-streamlit>=1.26.0
-pandas>=1.5.3
-numpy>=1.24.3
-scikit-learn>=1.2.2
-plotly>=5.15.0
-nltk>=3.8.1
-scipy>=1.10.1
+streamlit>=1.26.0            # Web app framework for creating the interactive UI
+pandas>=1.5.3                # Data manipulation and analysis library
+numpy>=1.24.3                # Numerical computing library for array operations
+scikit-learn>=1.2.2          # Machine learning library for clustering algorithms
+plotly>=5.15.0               # Interactive visualization library
+nltk>=3.8.1                  # Natural language processing toolkit for text preprocessing
+scipy>=1.10.1                # Scientific computing library used for distance calculations
 
 # Embedding models
-sentence-transformers>=2.2.2  # For high-quality embeddings without API
-openai>=1.3.0  # For OpenAI embeddings and cluster naming
-tiktoken>=0.5.1  # Required by OpenAI for tokenization
+sentence-transformers>=2.2.2 # Creates high-quality sentence embeddings for semantic similarity
+openai>=1.3.0                # OpenAI API client for accessing their embedding models
+tiktoken>=0.5.1              # Tokenizer used by OpenAI models
 
 # Advanced NLP
-spacy>=3.6.1  # For advanced text processing
-textblob>=0.17.1  # Alternative to spaCy for text analysis
-
-# Additional spaCy models (installed separately with: python -m spacy download [model])
-# en_core_web_sm
-# es_core_news_sm
-# fr_core_news_sm
-# de_core_news_sm
+spacy>=3.6.1                 # Industrial-strength NLP library for advanced text processing
+textblob>=0.17.1             # Simplified text processing library with sentiment analysis
+# Direct link to the spaCy English model - provides linguistic features for English text
+https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.6.0/en_core_web_sm-3.6.0-py3-none-any.whl
 
 # Advanced clustering
-hdbscan>=0.8.33  # For density-based clustering (optional)
+hdbscan>=0.8.33              # Hierarchical density-based clustering algorithm
 
 # Data export
-openpyxl>=3.1.2  # For Excel export
-xlsxwriter>=3.1.2  # Alternative for Excel with more formatting options
+openpyxl>=3.1.2              # Library for reading/writing Excel 2010 xlsx/xlsm files
+xlsxwriter>=3.1.2            # Library for creating Excel XLSX files with rich formatting
 
 # Advanced features
-umap-learn>=0.5.4  # For dimensionality reduction (optional)
-gensim>=4.3.1  # For topic modeling and additional word embeddings
-wordcloud>=1.9.2  # For word cloud visualizations (optional)
+umap-learn>=0.5.4            # Dimensionality reduction technique for visualization
+gensim>=4.3.1                # Topic modeling and document similarity analysis
+wordcloud>=1.9.2             # Word cloud visualization for keyword frequency analysis
 
 # Utilities
-tqdm>=4.66.1  # For progress bars in batch processing
-python-dotenv>=1.0.0  # For environment variable management (API keys)
-requests>=2.31.0  # For external API integrations
-joblib>=1.3.2  # For parallelization and caching
+tqdm>=4.66.1                 # Progress bar utility for long-running operations
+python-dotenv>=1.0.0         # Loading environment variables from .env files (for API keys)
+requests>=2.31.0             # HTTP library for making API calls
+joblib>=1.3.2                # Tools for lightweight pipelining and parallelization
