@@ -25,6 +25,24 @@ from utils.constants import INTENT_COLORS, DEFAULT_NUM_CLUSTERS, APP_NAME, APP_D
 from utils.helpers import generate_sample_csv
 from utils.state import initialize_session_state, update_session_state
 
+def safe_rerun():
+    """
+    Safely rerun the app considering different Streamlit versions.
+    """
+    import streamlit as st
+    try:
+        # For newer Streamlit versions (1.16.0+)
+        st.rerun()
+    except AttributeError:
+        try:
+            # For older Streamlit versions
+            safe_rerun()
+        except Exception as e:
+            # Ultimate fallback
+            st.error(f"Could not rerun the app: {str(e)}. Please refresh the page manually.")
+            import time
+            time.sleep(2)  # Give user time to read the message
+            
 # Page configuration
 st.set_page_config(
     page_title=APP_NAME,
@@ -137,7 +155,7 @@ def main():
                     if key != "user_settings":
                         del st.session_state[key]
                 st.session_state.processing_complete = False
-                st.experimental_rerun()
+                safe_rerun()
     
     # Main content area
     if not st.session_state.processing_complete:
@@ -245,7 +263,7 @@ def main():
                     progress_bar.empty()
                     
                     # Force rerun to show results
-                    st.experimental_rerun()
+                    safe_rerun()
                 else:
                     st.error("There was an error processing your file. Please check the format and try again.")
     else:
