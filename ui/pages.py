@@ -243,12 +243,21 @@ def show_clusters_view(df: pd.DataFrame,
     # Show opportunity clusters if we have enough data
     if len(cluster_insights) >= 5:
         opportunities = identify_opportunity_clusters(cluster_insights)
-        show_opportunity_clusters(
-            opportunities, 
-            cluster_insights, 
-            df,
-            handle_cluster_click
-        )
+        
+        # Now pass the index in the opportunity section
+        opportunity_count = 0
+        opportunity_cols = st.columns(2)
+        for opp_id in opportunities:
+            if opp_id in cluster_insights:
+                with opportunity_cols[opportunity_count % 2]:
+                    display_cluster_card(
+                        opp_id, 
+                        cluster_insights[opp_id], 
+                        df,
+                        handle_cluster_click,
+                        card_index=f"opp_{opportunity_count}"  # Unique prefix for opportunities
+                    )
+                opportunity_count += 1
     
     # Create grid layout for cluster cards
     if filtered_cluster_ids:
@@ -262,7 +271,8 @@ def show_clusters_view(df: pd.DataFrame,
                     cluster_id, 
                     cluster_insights[cluster_id], 
                     df,
-                    handle_cluster_click
+                    handle_cluster_click,
+                    card_index=i  # Pass the index
                 )
     else:
         st.info("No clusters match your current filters. Try adjusting your filter criteria.")
