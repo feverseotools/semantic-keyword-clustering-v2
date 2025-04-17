@@ -49,39 +49,55 @@ def display_cluster_card(cluster_id: int,
     intent_color = INTENT_COLORS.get(primary_intent, "#757575")
     intent_class = primary_intent.lower().replace(" ", "-")
     
-    # Create a card with standard Streamlit components instead of raw HTML
-    st.markdown(f"### {cluster_name}")
+    # Create a card with Streamlit components and custom styling
+    st.markdown(f"""
+    <div style="border-left: 4px solid {intent_color}; padding: 15px; background-color: white; border-radius: 5px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <h3 style="margin-top: 0; margin-bottom: 10px;">{cluster_name}</h3>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Create metrics using columns
     col1, col2 = st.columns(2)
-    col3, col4 = st.columns(2)
-    
     with col1:
         st.metric("Keywords", f"{keyword_count}")
-    
     with col2:
-        st.write(f"**Intent:** {primary_intent}")
+        st.markdown(f"""
+        <div style="background-color: {intent_color}20; color: {intent_color}; padding: 5px 10px; border-radius: 10px; display: inline-block; font-size: 0.9em; font-weight: 500;">
+            {primary_intent}
+        </div>
+        """, unsafe_allow_html=True)
     
+    col3, col4 = st.columns(2)
     if total_volume is not None:
         with col3:
             st.metric("Volume", f"{total_volume:,}")
     
     if quality_score is not None:
         with col4:
-            st.metric("Quality", f"{quality_score}")
+            quality_color = "#4CAF50" if quality_score >= 7 else "#FF9800" if quality_score >= 5 else "#F44336"
+            st.markdown(f"""
+            <div style="margin-top: 10px;">
+                <span style="font-size: 0.9em; color: #555;">Quality:</span>
+                <span style="font-weight: bold; color: {quality_color}; font-size: 1.1em; margin-left: 5px;">{quality_score}</span>
+            </div>
+            """, unsafe_allow_html=True)
     
     # Show description if available
     description = insights.get('cluster_description', '')
     if description:
-        st.write(description)
+        st.markdown(f"<div style='font-size: 0.9em; color: #555; margin: 10px 0;'>{description}</div>", unsafe_allow_html=True)
     
     # Show representative keywords
     if rep_keywords:
-        st.write("**Top Keywords:**")
-        keyword_text = ", ".join(rep_keywords)
+        keyword_html = '<div style="margin-top: 10px;">'
+        for kw in rep_keywords:
+            keyword_html += f'<span style="display: inline-block; background-color: #f1f3f4; padding: 4px 10px; border-radius: 16px; margin: 2px; font-size: 0.85em; color: #555;">{kw}</span>'
+        
         if keyword_count > len(rep_keywords):
-            keyword_text += f" + {keyword_count - len(rep_keywords)} more"
-        st.write(keyword_text)
+            keyword_html += f'<span style="display: inline-block; background-color: #f1f3f4; padding: 4px 10px; border-radius: 16px; margin: 2px; font-size: 0.85em; color: #777;">+{keyword_count - len(rep_keywords)} more</span>'
+        
+        keyword_html += '</div>'
+        st.markdown(keyword_html, unsafe_allow_html=True)
     
     # Add a button for viewing details
     if on_click_callback:
@@ -90,8 +106,8 @@ def display_cluster_card(cluster_id: int,
         if st.button(f"View Details", key=unique_key, use_container_width=True):
             on_click_callback(cluster_id)
     
-    # Add a divider
-    st.markdown("---")
+    # Add a small spacer
+    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 
 def show_filter_controls(df: pd.DataFrame, cluster_insights: Dict[int, Dict[str, Any]]) -> Dict[str, Any]:
     """
@@ -330,7 +346,7 @@ def show_keyword_table(df: pd.DataFrame, cluster_id: Optional[int] = None) -> No
         height=min(400, 35 * len(display_df) + 38)  # Dynamic height based on row count
     )
 
-def def show_cluster_detail_view(cluster_id: int, 
+def show_cluster_detail_view(cluster_id: int, 
                            df: pd.DataFrame, 
                            insights: Dict[str, Any]) -> None:
     """
@@ -352,33 +368,39 @@ def def show_cluster_detail_view(cluster_id: int,
     col1, col2, col3 = st.columns(3)
     
     with col1:
+        # Simple metric without delta
         st.metric(
             label="Keywords", 
-            value=f"{len(cluster_df)}",
-            # Remove the delta parameter
+            value=f"{len(cluster_df)}"
         )
     
     with col2:
         intent = insights.get('primary_intent', 'Unknown')
-        st.metric(
-            label="Primary Intent", 
-            value=intent,
-            # Remove the delta parameter
-        )
+        intent_color = INTENT_COLORS.get(intent, "#757575")
+        # Use markdown with custom styling instead of metric
+        st.markdown(f"""
+        <div style="margin-top: 25px;">
+            <span style="font-size: 0.9em; color: #555;">Primary Intent:</span><br>
+            <span style="font-weight: bold; color: {intent_color}; font-size: 1.1em;">{intent}</span>
+        </div>
+        """, unsafe_allow_html=True)
     
     with col3:
         if 'quality_score' in insights:
-            quality = insights['quality_score']
-            st.metric(
-                label="Coherence Score", 
-                value=f"{quality:.1f}/10",
-                # Remove the delta parameter and delta_color
-            )
+            quality = insights.get('quality_score', 5.0)
+            quality_color = "#4CAF50" if quality >= 7 else "#FF9800" if quality >= 5 else "#F44336"
+            # Use markdown with custom styling instead of metric
+            st.markdown(f"""
+            <div style="margin-top: 25px;">
+                <span style="font-size: 0.9em; color: #555;">Coherence Score:</span><br>
+                <span style="font-weight: bold; color: {quality_color}; font-size: 1.1em;">{quality:.1f}/10</span>
+            </div>
+            """, unsafe_allow_html=True)
         elif 'total_volume' in insights:
+            # Simple metric without delta
             st.metric(
                 label="Search Volume", 
-                value=f"{insights['total_volume']:,}",
-                # Remove the delta parameter
+                value=f"{insights['total_volume']:,}"
             )
     
     # Journey and intent breakdown
@@ -418,6 +440,9 @@ def def show_cluster_detail_view(cluster_id: int,
         journey_phase = insights.get('journey_phase', 'Unknown')
         
         # Create a visual representation of customer journey
+        st.markdown("##### Customer Journey Phase")
+        
+        # Create journey visualization with custom HTML/CSS
         phases = ["Research Phase (Early)", 
                  "Research-to-Consideration Transition", 
                  "Consideration Phase (Middle)",
@@ -430,15 +455,12 @@ def def show_cluster_detail_view(cluster_id: int,
         # Determine active phase
         active_idx = -1
         for i, phase in enumerate(phases):
-            if journey_phase.startswith(phase.split(" ")[0]):
+            if journey_phase and journey_phase.startswith(phase.split(" ")[0]):
                 active_idx = i
                 break
         
-        # Create journey visualization
-        st.markdown("##### Customer Journey Phase")
-        
-        # Create a simple visual representation
-        journey_html = '<div style="display: flex; width: 100%; margin-top: 10px;">'
+        # Generate HTML for journey visualization
+        journey_html = '<div style="display: flex; width: 100%; margin-top: 15px;">'
         
         for i, phase in enumerate(display_phases):
             # Determine styling based on active phase
@@ -609,8 +631,12 @@ def show_opportunity_clusters(opportunities: List[int],
     if not opportunities:
         return
     
-    st.markdown("### 🌟 Top Opportunities")
-    st.markdown("These clusters represent your best opportunities based on search volume, competition, and relevance.")
+    st.markdown("""
+    <div style="background-color: #fffde7; border: 2px solid #ffd54f; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+        <h3 style="color: #f57c00; margin-top: 0;">🌟 Top Opportunities</h3>
+        <p style="margin-bottom: 15px;">These clusters represent your best opportunities based on search volume, competition, and relevance.</p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Display opportunity clusters in a 2-column grid
     cols = st.columns(2)
@@ -621,5 +647,6 @@ def show_opportunity_clusters(opportunities: List[int],
                     cluster_id, 
                     cluster_insights[cluster_id], 
                     df,
-                    on_click_callback
+                    on_click_callback,
+                    card_index=f"opp_{i}"  # Use unique prefix for opportunities
                 )
