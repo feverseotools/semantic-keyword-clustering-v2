@@ -270,6 +270,11 @@ def refine_clusters(df: pd.DataFrame, embeddings: np.ndarray) -> pd.DataFrame:
         st.error("Dataframe does not have a 'cluster_id' column")
         return df
     
+    # Verify embeddings shape matches dataframe
+    if len(df) != embeddings.shape[0]:
+        st.warning(f"Embedding count ({embeddings.shape[0]}) doesn't match keyword count ({len(df)}). Skipping cluster refinement.")
+        return df
+    
     result_df = df.copy()
     
     # Calculate cluster sizes
@@ -293,21 +298,36 @@ def refine_clusters(df: pd.DataFrame, embeddings: np.ndarray) -> pd.DataFrame:
         if normal_cluster_indices:  # Make sure there are normal clusters
             # For each keyword in a small cluster
             for idx in small_cluster_indices:
-                # Get its embedding
-                keyword_embedding = embeddings[idx].reshape(1, -1)
-                
-                # Get embeddings for normal clusters
-                normal_embeddings = embeddings[normal_cluster_indices]
-                
-                # Find most similar keyword in normal clusters
-                similarities = cosine_similarity(keyword_embedding, normal_embeddings)[0]
-                most_similar_idx = normal_cluster_indices[np.argmax(similarities)]
-                
-                # Assign to same cluster as most similar keyword
-                result_df.loc[idx, 'cluster_id'] = result_df.loc[most_similar_idx, 'cluster_id']
+                try:
+                    # Get its embedding
+                    keyword_embedding = embeddings[idx].reshape(1, -1)
+                    
+                    # Get embeddings for normal clusters
+                    normal_embeddings = embeddings[normal_cluster_indices]
+                    
+                    # Find most similar keyword in normal clusters
+                    similarities = cosine_similarity(keyword_embedding, normal_embeddings)[0]
+                    most_similar_idx = normal_cluster_indices[np.argmax(similarities)]
+                    
+                    # Assign to same cluster as most similar keyword
+                    result_df.loc[idx, 'cluster_id'] = result_df.loc[most_similar_idx, 'cluster_id']
+                except Exception as e:
+                    st.warning(f"Error reassigning small cluster keyword (index {idx}): {str(e)}")
+                    # Find the largest cluster for fallback assignment
+                    largest_cluster = cluster_sizes.idxmax()
+                    result_df.loc[idx, 'cluster_id'] = largest_cluster
     
     # Find representative keywords for each cluster
-    result_df = find_representative_keywords(result_df, embeddings)
+    try:
+        result_df = find_representative_keywords(result_df, embeddings)
+    except Exception as e:
+        st.warning(f"Error finding representative keywords: {str(e)}")
+        # Create a basic 'is_representative' column if the function fails
+        result_df['is_representative'] = False
+        for cluster_id in result_df['cluster_id'].unique():
+            cluster_indices = result_df[result_df['cluster_id'] == cluster_id].index.tolist()
+            rep_indices = cluster_indices[:min(5, len(cluster_indices))]
+            result_df.loc[rep_indices, 'is_representative'] = True
     
     return result_df
 
