@@ -1,36 +1,36 @@
 # Core dependencies
-streamlit>=1.26.0            # Web app framework for creating the interactive UI
-pandas>=1.5.3                # Data manipulation and analysis library
-numpy>=1.24.3                # Numerical computing library for array operations
-scikit-learn>=1.2.2          # Machine learning library for clustering algorithms
-plotly>=5.15.0               # Interactive visualization library
-nltk>=3.8.1                  # Natural language processing toolkit for text preprocessing
-scipy>=1.10.1                # Scientific computing library used for distance calculations
+streamlit>=1.26.0
+pandas>=1.5.3
+numpy>=1.24.3
+scikit-learn>=1.2.2
+plotly>=5.15.0
+nltk>=3.8.1
+scipy>=1.10.1
 
 # Embedding models
-sentence-transformers>=2.2.2 # Creates high-quality sentence embeddings for semantic similarity
-openai>=1.3.0                # OpenAI API client for accessing their embedding models
-tiktoken>=0.5.1              # Tokenizer used by OpenAI models
+sentence-transformers>=2.2.2
+openai>=1.3.0
+tiktoken>=0.5.1
 
 # Advanced NLP
-spacy>=3.6.1                 # Industrial-strength NLP library for advanced text processing
-textblob>=0.17.1             # Simplified text processing library with sentiment analysis
+spacy>=3.6.1
+textblob>=0.17.1
 en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.6.0/en_core_web_sm-3.6.0-py3-none-any.whl
 
 # Advanced clustering
-hdbscan==0.8.32              # Hierarchical density-based clustering algorithm (pinned to prebuilt wheel)
+hdbscan==0.8.32
 
 # Data export
-openpyxl>=3.1.2              # Library for reading/writing Excel 2010 xlsx/xlsm files
-xlsxwriter>=3.1.2            # Library for creating Excel XLSX files with rich formatting
+openpyxl>=3.1.2
+xlsxwriter>=3.1.2
 
 # Advanced features
-umap-learn>=0.5.4            # Dimensionality reduction technique for visualization
-gensim>=4.3.1                # Topic modeling and document similarity analysis
-wordcloud>=1.9.2             # Word cloud visualization for keyword frequency analysis
+umap-learn>=0.5.4
+gensim>=4.3.1
+wordcloud>=1.9.2
 
 # Utilities
-tqdm>=4.66.1                 # Progress bar utility for long-running operations
-python-dotenv>=1.0.0         # Loading environment variables from .env files (for API keys)
-requests>=2.31.0             # HTTP library for making API calls
-joblib>=1.3.2                # Tools for lightweight pipelining and parallelization
+tqdm>=4.66.1
+python-dotenv>=1.0.0
+requests>=2.31.0
+joblib>=1.3.2
