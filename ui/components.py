@@ -330,7 +330,7 @@ def show_keyword_table(df: pd.DataFrame, cluster_id: Optional[int] = None) -> No
         height=min(400, 35 * len(display_df) + 38)  # Dynamic height based on row count
     )
 
-def show_cluster_detail_view(cluster_id: int, 
+def def show_cluster_detail_view(cluster_id: int, 
                            df: pd.DataFrame, 
                            insights: Dict[str, Any]) -> None:
     """
@@ -353,34 +353,32 @@ def show_cluster_detail_view(cluster_id: int,
     
     with col1:
         st.metric(
-            "Keywords", 
-            f"{len(cluster_df)}",
-            help="Number of keywords in this cluster"
+            label="Keywords", 
+            value=f"{len(cluster_df)}",
+            # Remove the delta parameter
         )
     
     with col2:
         intent = insights.get('primary_intent', 'Unknown')
         st.metric(
-            "Primary Intent", 
-            intent,
-            help="Dominant search intent for this cluster"
+            label="Primary Intent", 
+            value=intent,
+            # Remove the delta parameter
         )
     
     with col3:
         if 'quality_score' in insights:
             quality = insights['quality_score']
-            quality_color = "#4CAF50" if quality >= 7 else "#FF9800" if quality >= 5 else "#F44336"
             st.metric(
-                "Coherence Score", 
-                f"{quality:.1f}/10",
-                help="Semantic coherence of the cluster (higher is better)",
-                delta_color=quality_color
+                label="Coherence Score", 
+                value=f"{quality:.1f}/10",
+                # Remove the delta parameter and delta_color
             )
         elif 'total_volume' in insights:
             st.metric(
-                "Search Volume", 
-                f"{insights['total_volume']:,}",
-                help="Total monthly search volume"
+                label="Search Volume", 
+                value=f"{insights['total_volume']:,}",
+                # Remove the delta parameter
             )
     
     # Journey and intent breakdown
