@@ -1,3 +1,19 @@
-# Build tools for compiling C‑extensions (e.g. HDBSCAN)
+# Core build toolchain
 build-essential
 python3-dev
+
+# For SciPy (in case it needs to compile from source)
+gfortran
+libatlas-base-dev
+
+# For HDBSCAN’s OpenMP
+libgomp1
+
+# For wordcloud / PIL wheels
+libfreetype6-dev
+libjpeg-dev
+libpng-dev
+
+# (Only if you end up building Rust‑based extensions)
+rustc
+cargo
